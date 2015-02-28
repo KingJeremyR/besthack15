@@ -25,8 +25,11 @@ def main():
     print("Got hub")
     hub.set_locking_policy(myo.locking_policy.none)
     print("Set locking policy")
-    hub.run(1000, Listener())
+    lis = Listener()
+    hub.run(1000, lis)
     print("Running listener")
+    print("Possible listener methods: ")
+    print('\n'.join("* " + att for att in dir(lis) if not att.startswith("__")))
 
 if __name__ == '__main__':
     main()
