@@ -10,4 +10,5 @@ Our HackUVA 2015 Project
 3. Install Python 3: https://www.python.org/downloads/
 4. Install Pyglet: http://www.pyglet.org/
     * With Pip3: `pip3 install pyglet`
-5. Test with: `python test_myo.py`
+5. Initialize myo-python submodule: `git submodule init`
+6. Test with: `python test_myo.py`
