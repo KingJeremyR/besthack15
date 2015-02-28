@@ -1,0 +1,3 @@
+[submodule "myo-python"]
+	path = myo-python
+	url = git@github.com:AndyBarron/myo-python.git
