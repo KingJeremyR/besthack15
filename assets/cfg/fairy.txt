@@ -1,0 +1,4 @@
+punch: goodmagic.wav
+swing_right: chime.wav
+swing_left: sword.wav
+idea: excitingbell.wav
