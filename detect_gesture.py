@@ -4,6 +4,8 @@ import os
 import sys
 import datetime
 import sfx
+from enum import Enum
+import math
 sys.path.append(os.path.join(os.getcwd(), 'myo-python'))
 
 # Test Myo stuff
@@ -21,16 +23,24 @@ class Listener(myo.DeviceListener):
 
         self.x_gyro_buffer = [0] * self.BUFFER_SIZE
         self.x_gyro_index = 0
+        self.y_gyro_buffer = [0] * self.BUFFER_SIZE
+        self.y_gyro_index = 0
+        self.z_gyro_buffer = [0] * self.BUFFER_SIZE
+        self.z_gyro_index = 0
 
         self.x_accel_buffer = [0] * self.BUFFER_SIZE
         self.x_accel_index = 0
+        self.y_accel_buffer = [0] * self.BUFFER_SIZE
+        self.y_accel_index = 0
+        self.z_accel_buffer = [0] * self.BUFFER_SIZE
+        self.z_accel_index = 0
 
         self.pitch_buffer = [0] * self.BUFFER_SIZE
         self.pitch_index = 0
 
         self.gyroscope = []
         self.acceleration = []
-        self.orientation = []
+        self.orientation = [0,0,0,0]
         self.myo = None
 
     def on_pair(self, myo, timestamp):
@@ -55,8 +65,6 @@ class Listener(myo.DeviceListener):
         if self.pitch_index == self.BUFFER_SIZE:
             self.pitch_index = 0
 
-
-
     def on_gyroscope_data(self, myo, timestamp, gyroscope):
         self.gyroscope = gyroscope
 
@@ -66,6 +74,18 @@ class Listener(myo.DeviceListener):
 
         if self.x_gyro_index == self.BUFFER_SIZE:
             self.x_gyro_index = 0
+
+        self.y_gyro_buffer[self.y_gyro_index] = y_gyro
+        self.y_gyro_index = self.y_gyro_index + 1
+
+        if self.y_gyro_index == self.BUFFER_SIZE:
+            self.y_gyro_index = 0
+
+        self.z_gyro_buffer[self.z_gyro_index] = z_gyro
+        self.z_gyro_index = self.z_gyro_index + 1
+
+        if self.z_gyro_index == self.BUFFER_SIZE:
+            self.z_gyro_index = 0
 
     def on_accelerometor_data(self, myo, timestamp, acceleration):
         self.acceleration = acceleration
@@ -77,9 +97,29 @@ class Listener(myo.DeviceListener):
         if self.x_accel_index == self.BUFFER_SIZE:
             self.x_accel_index = 0
 
+        self.y_accel_buffer[self.y_accel_index] = y_accel
+        self.y_accel_index = self.y_accel_index + 1
+
+        if self.y_accel_index == self.BUFFER_SIZE:
+            self.y_accel_index = 0
+
+        self.z_accel_buffer[self.z_accel_index] = z_accel
+        self.z_accel_index = self.z_accel_index + 1
+
+        if self.z_accel_index == self.BUFFER_SIZE:
+            self.z_accel_index = 0
+
+Direction = Enum("Direction", "left right up down front behind")
+
+direction = 0
+roll = 0
+pitch = 0
+yaw = 0
 
 def isPointingUp(listener):
-    if get_average(listener.pitch_buffer) < -0.45 and get_average(listener.x_gyro_buffer) > 75:
+    global direction
+
+    if direction == Direction.up and get_average(listener.x_gyro_buffer) > 75:
         return True
 
     return False
@@ -94,18 +134,43 @@ def get_average(buf):
     return average / len(buf)
 
 def printValues(listener):
+    global direction
     # for val in listener.gyroscope:
     #     print("{},\t".format(round(val, 2)), end="")
     # for val in listener.acceleration:
     #     print("{},\t".format(round(val, 2)), end="")
-    for val in listener.orientation:
-        print("{},\t".format(round(val, 2)), end="")
-    print(get_average(listener.pitch_buffer), end="")
-    print("\t", end="")
-    print(get_average(listener.x_gyro_buffer), end="")
+    # for val in listener.orientation:
+    #     print("{},\t".format(round(val, 2)), end="")
+    # print(get_average(listener.pitch_buffer), end="")
+    # print("\t", end="")
+    # print(get_average(listener.x_gyro_buffer), end="")
+    print(str(roll) + ", " + str(pitch) + ", " + str(yaw))
+    print(direction)
+    # print()
 
-    print()
+def updateDirection(listener):
+    global roll, pitch, yaw, direction
+    # http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+    x,y,z,w = listener.orientation
+    try:
+        roll  = float(math.atan2(2.0 * (float(w * x) + float(y * z)), 1.0 - 2.0 * (float(x * x) + float(y * y))))
+        pitch = float(math.asin(-2.0 * (float(y * w) - float(z * x))))
+        yaw   = float(math.atan2(-2.0 * (float(w * z) + float(x * y)), 1.0 - 2.0 * (float(y * y) + float(z * z))))
+    except ValueError: 
+        pass
 
+    if pitch < -0.75:
+        direction = Direction.up
+    elif pitch > 0.75:
+        direction = Direction.down
+    elif yaw > 2:
+        direction = Direction.left
+    elif yaw < -2:
+        direction = Direction.front
+    elif yaw > 0:
+        direction = Direction.behind
+    elif yaw < 0:
+        direction = Direction.right
 
 
 def main():
@@ -115,23 +180,23 @@ def main():
     listener = Listener()
     hub.run(1000, listener)
 
-    time_of_last_vibrate = -1
+    time_of_last_vibrate = datetime.datetime.now()
     time_of_last_print = datetime.datetime.now()
     current_time = datetime.datetime.now()
 
     try:
         while hub.running:
 
-            if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.1):
+            if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.25):
                 time_of_last_print = datetime.datetime.now()
                 printValues(listener)
 
             if datetime.datetime.now() - current_time  > datetime.timedelta(0, 0, 10000):
                 current_time = datetime.datetime.now()
+                updateDirection(listener)        
 
             if isPointingUp(listener):
-                print ("Point Up!")
-                if time_of_last_vibrate == -1 or (current_time - time_of_last_vibrate) > datetime.timedelta(0,1):
+                if current_time - time_of_last_vibrate > datetime.timedelta(0,1):
                     listener.myo.vibrate("long")
                     sfx.play("button-3.wav")
                     time_of_last_vibrate = current_time

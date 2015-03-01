@@ -33,7 +33,7 @@ function onPeriodic()
       myo.vibrate("short")
     end
     
-    myo.debug("Point Up")
+    -- myo.debug("Point Up")
   end
 
   if currentTime - startTime > 250 then 
@@ -73,8 +73,10 @@ function updateTime()
 end
 
 function printValues()
-  xGyro, yGyro, zGyro = myo.getGyro()
-  xAccel, yAccel, zAccel = myo.getOrientationWorld()
+  -- xGyro, yGyro, zGyro = myo.getOrientationWorld()
+  xGyro, yGyro, zGyro = myo.getRoll(), myo.getPitch(), myo.getYaw()
+  -- xGyro, yGyro, zGyro = myo.getRoll(), myo.getPitch(), myo.getYaw()
+  -- xAccel, yAccel, zAccel = myo.getOrientationWorld()
 
   spaces = 16 - string.len(xGyro .. "")
   space1 = ""
@@ -90,35 +92,37 @@ function printValues()
     space2 = space2 .. " "
   end
 
-  spaces = 16 - string.len(zGyro .. "")
-  space3 = ""
+  myo.debug(string.format("%." .. 2 .. "f", xGyro) .. space1 .. ", " .. string.format("%." .. 2 .. "f", yGyro) .. space2 .. ", " .. string.format("%." .. 2 .. "f", zGyro))
 
-  for i=1, spaces do 
-    space3 = space3 .. " "
-  end
+  -- spaces = 16 - string.len(zGyro .. "")
+  -- space3 = ""
 
-  spaces = 16 - string.len(xAccel .. "")
-  space4 = ""
+  -- for i=1, spaces do 
+  --   space3 = space3 .. " "
+  -- end
 
-  for i=1, spaces do 
-    space4 = space4 .. " "
-  end
+  -- spaces = 16 - string.len(xAccel .. "")
+  -- space4 = ""
 
-  spaces = 16 - string.len(yAccel .. "")
-  space5 = ""
+  -- for i=1, spaces do 
+  --   space4 = space4 .. " "
+  -- end
 
-  for i=1, spaces do 
-    space5 = space5 .. " "
-  end
+  -- spaces = 16 - string.len(yAccel .. "")
+  -- space5 = ""
 
-  spaces = 16 - string.len(zAccel .. "")
-  space6 = ""
+  -- for i=1, spaces do 
+  --   space5 = space5 .. " "
+  -- end
 
-  for i=1, spaces do 
-    space6 = space6 .. " "
-  end
+  -- spaces = 16 - string.len(zAccel .. "")
+  -- space6 = ""
 
-  myo.debug(xGyro .. space1 .. ", " .. yGyro .. space2 .. ", " .. zGyro .. space3 .. ", " .. xAccel .. space4 .. ", " .. yAccel .. space5 .. ", " .. zAccel)
+  -- for i=1, spaces do 
+  --   space6 = space6 .. " "
+  -- end
+
+  -- myo.debug(xGyro .. space1 .. ", " .. yGyro .. space2 .. ", " .. zGyro .. space3 .. ", " .. xAccel .. space4 .. ", " .. yAccel .. space5 .. ", " .. zAccel)
 end
 
 function getAverage(buffer)
