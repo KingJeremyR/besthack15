@@ -217,7 +217,16 @@ def moving_forward(listener):
 
 def moving_leftToRight(listener):
     global direction
-    if direction == Direction.left and get_average(listener.z_gyro_buffer) < -100:
+    y_val = get_average(listener.y_gyro_buffer)
+    if direction == Direction.left and get_average(listener.z_gyro_buffer) < -100 and y_val <50 and y_val > -50:
+        return True
+
+    return False
+
+def moving_rightToLeft(listener):
+    global direction
+    y_val = get_average(listener.y_gyro_buffer)
+    if direction == Direction.right and get_average(listener.z_gyro_buffer) > 100 and y_val <50 and y_val > -50:
         return True
 
     return False
