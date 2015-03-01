@@ -47,9 +47,9 @@ class Listener(myo.DeviceListener):
         self.myo = myo
         print_("Hello Myo")
 
-    def on_rssi(self, myo, timestamp, rssi):
-        print_("RSSI:", rssi)
-        return False # Stop the Hub
+    #def on_rssi(self, myo, timestamp, rssi):
+        #print_("RSSI:", rssi)
+        #return False # Stop the Hub
 
     def on_event(self, event):
         pass
@@ -215,11 +215,21 @@ def moving_forward(listener):
 
     return False
 
+def moving_leftToRight(listener):
+    global direction
+    if direction == Direction.left and get_average(listener.z_gyro_buffer) < -100:
+        return True
+
+    return False
+
 def up_action():
     sfx.play("button-3.wav")
 
 def forward_action():
     sfx.play("punch.wav") 
+
+def leftToRight_action():
+    sfx.play("zoom.wav")
 
 def main():
     global current_time, yaw_calibrated, yaw, BUFFER_SIZE, yaw_buffer, yaw_buffer_index
@@ -278,6 +288,9 @@ def main():
 
             elif moving_forward(listener):
                 long_vibrate(listener, forward_action)
+
+            elif moving_leftToRight(listener):
+                long_vibrate(listener, leftToRight_action)
                 
                     
 
