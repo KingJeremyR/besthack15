@@ -109,20 +109,18 @@ class Listener(myo.DeviceListener):
         if self.z_accel_index == self.BUFFER_SIZE:
             self.z_accel_index = 0
 
-Direction = Enum("Direction", "left right up down front behind")
+# START MAIN
+
+Direction = Enum("Direction", "left right up down forward back")
 
 direction = 0
 roll = 0
 pitch = 0
 yaw = 0
 
-def isPointingUp(listener):
-    global direction
-
-    if direction == Direction.up and get_average(listener.x_gyro_buffer) > 75:
-        return True
-
-    return False
+time_of_last_vibrate = datetime.datetime.now()
+time_of_last_print = datetime.datetime.now()
+current_time = datetime.datetime.now()
 
 def get_average(buf):
 
@@ -134,21 +132,24 @@ def get_average(buf):
     return average / len(buf)
 
 def printValues(listener):
-    global direction
-    # for val in listener.gyroscope:
-    #     print("{},\t".format(round(val, 2)), end="")
-    # for val in listener.acceleration:
-    #     print("{},\t".format(round(val, 2)), end="")
-    # for val in listener.orientation:
-    #     print("{},\t".format(round(val, 2)), end="")
-    # print(get_average(listener.pitch_buffer), end="")
-    # print("\t", end="")
-    # print(get_average(listener.x_gyro_buffer), end="")
-    print(str(roll) + ", " + str(pitch) + ", " + str(yaw))
-    print(direction)
-    # print()
+    global direction, time_of_last_print
 
-def updateDirection(listener):
+    if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.25):
+        time_of_last_print = datetime.datetime.now()
+        # for val in listener.gyroscope:
+        #     print("{},\t".format(round(val, 2)), end="")
+        # for val in listener.acceleration:
+        #     print("{},\t".format(round(val, 2)), end="")
+        # for val in listener.orientation:
+        #     print("{},\t".format(round(val, 2)), end="")
+        # print(get_average(listener.pitch_buffer), end="")
+        # print("\t", end="")
+        # print(get_average(listener.x_gyro_buffer), end="")
+        print(str(roll) + ", " + str(pitch) + ", " + str(yaw))
+        print(direction)
+        # print()
+
+def update_direction(listener):
     global roll, pitch, yaw, direction
     # http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
     x,y,z,w = listener.orientation
@@ -159,6 +160,8 @@ def updateDirection(listener):
     except ValueError: 
         pass
 
+    # TODO: Calibrate forward directions? 
+
     if pitch < -0.75:
         direction = Direction.up
     elif pitch > 0.75:
@@ -166,40 +169,66 @@ def updateDirection(listener):
     elif yaw > 2:
         direction = Direction.left
     elif yaw < -2:
-        direction = Direction.front
+        direction = Direction.forward
     elif yaw > 0:
-        direction = Direction.behind
+        direction = Direction.back
     elif yaw < 0:
         direction = Direction.right
 
+def long_vibrate(listener, action):
+    global current_time, time_of_last_vibrate
+    if current_time - time_of_last_vibrate > datetime.timedelta(0,1):
+        listener.myo.vibrate("long")
+        time_of_last_vibrate = current_time
+        action()
+
+def moving_up(listener):
+    global direction
+
+    if direction == Direction.up and get_average(listener.x_gyro_buffer) > 75:
+        return True
+
+    return False
+
+def moving_forward(listener):
+    global direction
+
+    if direction == Direction.forward and get_average(listener.x_gyro_buffer) > 75:
+        return True
+
+    return False
+
+def up_action():
+    sfx.play("button-3.wav")
+
+def forward_action():
+    sfx.play("punch.wav") 
 
 def main():
+    global current_time
     hub = myo.Hub()
     hub.set_locking_policy(myo.locking_policy.none)
 
     listener = Listener()
     hub.run(1000, listener)
 
-    time_of_last_vibrate = datetime.datetime.now()
-    time_of_last_print = datetime.datetime.now()
-    current_time = datetime.datetime.now()
-
     try:
         while hub.running:
 
-            if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.25):
-                time_of_last_print = datetime.datetime.now()
-                printValues(listener)
+            printValues(listener)
 
             if datetime.datetime.now() - current_time  > datetime.timedelta(0, 0, 10000):
                 current_time = datetime.datetime.now()
-                updateDirection(listener)        
+                update_direction(listener)        
 
-            if isPointingUp(listener):
-                if current_time - time_of_last_vibrate > datetime.timedelta(0,1):
-                    listener.myo.vibrate("long")
-                    sfx.play("button-3.wav")
-                    time_of_last_vibrate = current_time
+            if moving_up(listener):
+                long_vibrate(listener, up_action)
+
+            elif moving_forward(listener):
+                long_vibrate(listener, forward_action)
+                
+                    
+
 
     except KeyboardInterrupt:
         print_("Quitting ...")
