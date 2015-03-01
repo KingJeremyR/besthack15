@@ -239,7 +239,7 @@ def up_action():
 def forward_action():
     sfx.play("punch.wav") 
 
-def leftToRight_action():
+def left_to_right_action():
     sfx.play("zoom.wav")
 
 def main():
@@ -301,7 +301,7 @@ def main():
                 long_vibrate(listener, forward_action)
 
             elif moving_left_to_right(listener):
-                long_vibrate(listener, leftToRight_action)
+                long_vibrate(listener, left_to_right_action)
                 
                     
 
