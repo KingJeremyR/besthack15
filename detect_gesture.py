@@ -212,11 +212,10 @@ def update_direction(listener):
         elif (yaw > right_left and yaw < right_left + (2 * YAW_INTERVAL)) or (right_left + (2 * YAW_INTERVAL) > 3 and yaw < right_right):
             direction = Direction.right
         
-
-def long_vibrate(listener, action):
+def vibrate(listener, action, length="short"):
     global current_time, time_of_last_vibrate
     if current_time - time_of_last_vibrate > datetime.timedelta(0,1):
-        listener.myo.vibrate("short")
+        listener.myo.vibrate(length)
         time_of_last_vibrate = current_time
         action()
 
@@ -320,16 +319,16 @@ def main():
                 update_direction(listener)        
 
             if moving_up(listener):
-                long_vibrate(listener, up_action)
+                vibrate(listener, up_action)
 
             elif moving_forward(listener):
-                long_vibrate(listener, forward_action)
+                vibrate(listener, forward_action)
 
             elif moving_left_to_right(listener):
-                long_vibrate(listener, left_to_right_action)
+                vibrate(listener, left_to_right_action)
 
             elif moving_right_to_left(listener):
-                long_vibrate(listener, right_to_left_action)
+                vibrate(listener, right_to_left_action)
                 
                     
 
