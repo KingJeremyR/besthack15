@@ -1,19 +1,35 @@
 #!/usr/bin/env python3
 import pyglet
-import os.path as path
+import os.path
+import sys
 
 SOUND_PATH = "assets/sfx"
 sounds = dict()
 
-def play_file(fname):
+def get_sfx_path(sfx):
+    return os.path.join(SOUND_PATH, sfx)
+
+def load_file(fname):
+    success = True
     try:
         if fname not in sounds:
+            print('Loading sfx: {}'.format(fname))
             snd = pyglet.media.load(fname, streaming=False)
             sounds[fname] = snd
+    except FileNotFoundError:
+        print("File not found: {}".format(fname))
+        success = False
+    return success
+
+
+def play_file(fname):
+    if load_file(fname):
         return sounds[fname].play()
-    except FileNotFoundError as e:
-        print("File not found: %s" % fname)
+    else:
         return None
 
+def load(sfx):
+    return load_file(get_sfx_path(sfx))
+
 def play(sfx):
-    return play_file(path.join(SOUND_PATH, sfx))
+    return play_file(get_sfx_path(sfx))

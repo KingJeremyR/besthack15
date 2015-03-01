@@ -19,11 +19,19 @@ Infinity = float("inf")
 DO_COMPARE = False
 window = list()
 
+# normalization
+drift = None
+SAVE_DRIFT = False
+
 # exiting
 DO_QUIT = False
 
+def list_sub(a, b):
+    return list(map(lambda tup: tup[0]-tup[1], zip(a, b)))
+
 def normalize(value, tuple_range):
     lit, big = tuple_range
+    if (big == lit): return 0 # ??
     return (value - lit) / (big - lit)
 
 def compare_frames(ref, cur, ranges):
@@ -44,10 +52,13 @@ def compare_recordings(ref, cur, ranges):
 class Listener(myo.DeviceListener):
 
     def on_pose(self, myo, timestamp, pose):
-        print(pose)
+        global SAVE_DRIFT
+        if pose == pose.double_tap:
+            SAVE_DRIFT = True
+            myo.vibrate("short")
 
     def on_event(self, event):
-        global capture, capture_ranges, window
+        global capture, capture_ranges, window, drift, SAVE_DRIFT
         if not hasattr(event, 'acceleration'): return
         # print(event.orientation)
         # print(event.acceleration)
@@ -56,6 +67,17 @@ class Listener(myo.DeviceListener):
         data += event.orientation
         data += event.acceleration
         # data += event.gyroscope
+        if drift is None:
+            drift = data
+            return
+        elif SAVE_DRIFT:
+            print("saving drift")
+            drift = data
+            SAVE_DRIFT = False
+            return
+        elif drift is not None:
+            data = list_sub(data, drift)
+
         if DO_RECORD:
             capture.append(data)
         elif capture_ranges is None and DO_COMPARE:
