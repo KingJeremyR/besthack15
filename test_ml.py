@@ -8,16 +8,15 @@ sys.path.append(os.path.join(os.getcwd(), 'myo-python'))
 import myo
 myo.init()
 
-from myo.six import print_
-
 class Listener(myo.DeviceListener):
 
-    def on_pair(self, myo, timestamp):
-        print_("Hello Myo")
-
-    def on_rssi(self, myo, timestamp, rssi):
-        print_("RSSI:", rssi)
-        return False # Stop the Hub
+    def on_event(self, event):
+        if not hasattr(event, 'acceleration'): return
+        # print(event.orientation)
+        # print(event.acceleration)
+        # print(event.gyroscope)
+        data = event.orientation + event.acceleration + event.gyroscope
+        print(data)
 
 def main():
     print("Starting main")
