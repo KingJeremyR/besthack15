@@ -114,6 +114,16 @@ class Listener(myo.DeviceListener):
 Direction = Enum("Direction", "left right up down forward back")
 
 direction = 0
+
+yaw_calibrated = 0
+YAW_INTERVAL = 0.75
+
+BUFFER_SIZE = 32
+yaw_buffer = [0] * BUFFER_SIZE
+yaw_buffer_index = 0
+
+forward_left, forward_right, left_left, left_right, back_left, back_right, right_left, right_right = 0, 0, 0, 0, 0, 0, 0, 0
+
 roll = 0
 pitch = 0
 yaw = 0
@@ -149,8 +159,8 @@ def printValues(listener):
         print(direction)
         # print()
 
-def update_direction(listener):
-    global roll, pitch, yaw, direction
+def update_orientation(listener):
+    global roll, pitch, yaw
     # http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
     x,y,z,w = listener.orientation
     try:
@@ -160,20 +170,27 @@ def update_direction(listener):
     except ValueError: 
         pass
 
-    # TODO: Calibrate forward directions? 
+def update_direction(listener):
+    global roll, pitch, yaw, direction, yaw_calibrated, YAW_INTERVAL 
+    global forward_left, forward_right, left_left, left_right, back_left, back_right, right_left, right_right
+
+    update_orientation(listener)
 
     if pitch < -0.75:
         direction = Direction.up
     elif pitch > 0.75:
         direction = Direction.down
-    elif yaw > 2:
-        direction = Direction.left
-    elif yaw < -2:
-        direction = Direction.forward
-    elif yaw > 0:
-        direction = Direction.back
-    elif yaw < 0:
-        direction = Direction.right
+    else:
+
+        if (yaw > forward_left and yaw < forward_left + (2 * YAW_INTERVAL)) or (forward_left + (2 * YAW_INTERVAL) > 3 and yaw < forward_right):
+            direction = Direction.forward
+        elif (yaw > left_left and yaw < left_left + (2 * YAW_INTERVAL)) or (left_left + (2 * YAW_INTERVAL) > 3 and yaw < left_right):
+            direction = Direction.left
+        elif (yaw > back_left and yaw < back_left + (2 * YAW_INTERVAL)) or (back_left + (2 * YAW_INTERVAL) > 3 and yaw < back_right):
+            direction = Direction.back
+        elif (yaw > right_left and yaw < right_left + (2 * YAW_INTERVAL)) or (right_left + (2 * YAW_INTERVAL) > 3 and yaw < right_right):
+            direction = Direction.right
+        
 
 def long_vibrate(listener, action):
     global current_time, time_of_last_vibrate
@@ -185,7 +202,7 @@ def long_vibrate(listener, action):
 def moving_up(listener):
     global direction
 
-    if direction == Direction.up and get_average(listener.x_gyro_buffer) > 75:
+    if direction == Direction.up and get_average(listener.x_gyro_buffer) > 100:
         return True
 
     return False
@@ -193,7 +210,7 @@ def moving_up(listener):
 def moving_forward(listener):
     global direction
 
-    if direction == Direction.forward and get_average(listener.x_gyro_buffer) > 75:
+    if direction == Direction.forward and get_average(listener.x_gyro_buffer) > 100:
         return True
 
     return False
@@ -205,7 +222,8 @@ def forward_action():
     sfx.play("punch.wav") 
 
 def main():
-    global current_time
+    global current_time, yaw_calibrated, yaw, BUFFER_SIZE, yaw_buffer, yaw_buffer_index
+    global forward_left, forward_right, left_left, left_right, back_left, back_right, right_left, right_right
     hub = myo.Hub()
     hub.set_locking_policy(myo.locking_policy.none)
 
@@ -213,6 +231,40 @@ def main():
     hub.run(1000, listener)
 
     try:
+        print("Calibrating...")
+        print("Hold your arm out in front of you for a short while.")
+
+        current_time = datetime.datetime.now()
+
+        while(datetime.datetime.now() - current_time < datetime.timedelta(0, 3)):
+            update_orientation(listener)
+            yaw_buffer[yaw_buffer_index] = yaw
+            yaw_buffer_index += 1
+
+            if yaw_buffer_index == BUFFER_SIZE:
+                yaw_buffer_index = 0
+
+        yaw_calibrated = get_average(yaw_buffer)
+
+        forward_left = yaw_calibrated - YAW_INTERVAL if yaw_calibrated - YAW_INTERVAL > -3 else yaw_calibrated - YAW_INTERVAL + 6
+        forward_right = yaw_calibrated + YAW_INTERVAL if yaw_calibrated + YAW_INTERVAL < 3 else yaw_calibrated + YAW_INTERVAL - 6
+        left_left = yaw_calibrated - (YAW_INTERVAL * 3) if yaw_calibrated - (YAW_INTERVAL * 3) > -3 else yaw_calibrated - (YAW_INTERVAL * 3) + 6
+        left_right = forward_left
+        back_left = yaw_calibrated - (YAW_INTERVAL * 5) if yaw_calibrated - (YAW_INTERVAL * 5) > -3 else yaw_calibrated - (YAW_INTERVAL * 5) + 6
+        back_right = left_left
+        right_left = forward_right
+        right_right = back_left
+
+        print(forward_left)
+        print(forward_right)
+
+        print(left_left)
+        print(left_right)
+
+        listener.myo.vibrate("short")
+
+        print(yaw_calibrated)
+
         while hub.running:
 
             printValues(listener)
