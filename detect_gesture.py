@@ -3,6 +3,7 @@
 import os
 import sys
 import datetime
+import sfx
 sys.path.append(os.path.join(os.getcwd(), 'myo-python'))
 
 # Test Myo stuff
@@ -77,9 +78,9 @@ def get_average(buf):
 
 def printValues(listener):
     for val in listener.gyroscope:
-        print("{}, ".format(val), end="")
+        print("{},\t".format(round(val, 2)), end="")
     for val in listener.acceleration:
-        print("{}, ".format(val), end="")
+        print("{},\t".format(round(val, 2)), end="")
     print()
 
 
@@ -92,17 +93,24 @@ def main():
     hub.run(1000, listener)
 
     time_of_last_vibrate = -1
+    time_of_last_print = datetime.datetime.now()
     current_time = datetime.datetime.now()
 
     try:
         while hub.running:
-            # printValues(listener)
-            current_time = datetime.datetime.now()
-            if isPointingUp(listener):
-                print ("Point Up!")
 
+            # if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.25):
+            #     time_of_last_print = datetime.datetime.now()
+            #     printValues(listener)
+
+            if datetime.datetime.now() - current_time  > datetime.timedelta(0, 0, 10000):
+                current_time = datetime.datetime.now()
+
+            if isPointingUp(listener):
+                # print ("Point Up!")
                 if time_of_last_vibrate == -1 or (current_time - time_of_last_vibrate) > datetime.timedelta(0,1):
-                    listener.myo.vibrate("short")
+                    listener.myo.vibrate("long")
+                    sfx.play("button-3.wav")
                     time_of_last_vibrate = current_time
 
     except KeyboardInterrupt:
