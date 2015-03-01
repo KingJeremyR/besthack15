@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+import sys
 
 # config vars
-CONFIG_FILE = "basic.txt"
+CONFIG_FILE = "basic.txt" if len(sys.argv) < 2 else sys.argv[1]
 
 # Add myo-python library to Python path
 import os
@@ -306,6 +307,7 @@ def main():
         # print(left_right)
 
         listener.myo.vibrate("medium")
+        print("Calibrated!")
 
         # print(yaw_calibrated)
 
