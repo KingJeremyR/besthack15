@@ -17,10 +17,9 @@ DO_COMPARE = False
 window = list()
 
 # learning
-import itertools
 import numpy as np
-from sklearn.naive_bayes import GaussianNB
-clf = GaussianNB()
+from sklearn import mixture
+clf = mixture.GMM()
 LEARNED = False
 
 # exiting
@@ -63,10 +62,9 @@ def main():
     DO_RECORD = False
     DO_COMPARE = True
     # learn!
-    X = [capture]
-    Y = [0]
+    X = capture
     print("fitting...")
-    clf.fit(X, Y)
+    clf.fit(X)
     print("fit!")
     LEARNED = True
     # DO_QUIT = True
