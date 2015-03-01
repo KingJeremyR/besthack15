@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# config vars
+CONFIG_FILE = "basic.txt"
+
 # Add myo-python library to Python path
 import os
 import sys
@@ -13,6 +17,14 @@ import myo
 myo.init()
 
 from myo.six import print_
+
+# configuration
+import cfg
+conf = dict()
+
+def play_gesture_sound(gesture):
+    if gesture in conf:
+        return sfx.play(conf[gesture])
 
 class Listener(myo.DeviceListener):
 
@@ -113,7 +125,8 @@ class Listener(myo.DeviceListener):
 
 Direction = Enum("Direction", "left right up down forward back")
 
-direction = 0
+direction = None
+last_direction = None
 
 yaw_calibrated = 0
 YAW_INTERVAL = 0.75
@@ -144,10 +157,15 @@ def get_average(buf):
     return average / len(buf)
 
 def printValues(listener):
-    global direction, time_of_last_print
+    # global time_of_last_print
+    global last_direction
+    global direction
+    if direction != last_direction and direction is not None:
+        print(str(direction).split('.')[-1])
+        last_direction = direction
 
-    if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.25):
-        time_of_last_print = datetime.datetime.now()
+    # if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.25):
+        # time_of_last_print = datetime.datetime.now()
         # for val in listener.gyroscope:
         #     print("{},\t".format(round(val, 2)), end="")
         # for val in listener.acceleration:
@@ -157,8 +175,8 @@ def printValues(listener):
         # print(get_average(listener.pitch_buffer), end="")
         # print("\t", end="")
         # print(get_average(listener.x_gyro_buffer), end="")
-        print(str(roll) + ", " + str(pitch) + ", " + str(yaw))
-        print(direction)
+        # print(str(roll) + ", " + str(pitch) + ", " + str(yaw))
+        # print(direction)
         # print()
 
 def update_orientation(listener):
@@ -197,7 +215,7 @@ def update_direction(listener):
 def long_vibrate(listener, action):
     global current_time, time_of_last_vibrate
     if current_time - time_of_last_vibrate > datetime.timedelta(0,1):
-        listener.myo.vibrate("long")
+        listener.myo.vibrate("short")
         time_of_last_vibrate = current_time
         action()
 
@@ -234,17 +252,22 @@ def moving_right_to_left(listener):
     return False
 
 def up_action():
-    sfx.play("button-3.wav")
+    play_gesture_sound("idea")
 
 def forward_action():
-    sfx.play("punch.wav") 
+    play_gesture_sound("punch")
 
 def left_to_right_action():
-    sfx.play("zoom.wav")
+    play_gesture_sound("swing_right")
+
+def right_to_left_action():
+    play_gesture_sound("swing_left")
 
 def main():
+    global conf
     global current_time, yaw_calibrated, yaw, BUFFER_SIZE, yaw_buffer, yaw_buffer_index
     global forward_left, forward_right, left_left, left_right, back_left, back_right, right_left, right_right
+    conf = cfg.load_cfg(CONFIG_FILE)
     hub = myo.Hub()
     hub.set_locking_policy(myo.locking_policy.none)
 
@@ -276,15 +299,15 @@ def main():
         right_left = forward_right
         right_right = back_left
 
-        print(forward_left)
-        print(forward_right)
+        # print(forward_left)
+        # print(forward_right)
 
-        print(left_left)
-        print(left_right)
+        # print(left_left)
+        # print(left_right)
 
-        listener.myo.vibrate("short")
+        listener.myo.vibrate("medium")
 
-        print(yaw_calibrated)
+        # print(yaw_calibrated)
 
         while hub.running:
 
@@ -302,6 +325,9 @@ def main():
 
             elif moving_left_to_right(listener):
                 long_vibrate(listener, left_to_right_action)
+
+            elif moving_right_to_left(listener):
+                long_vibrate(listener, right_to_left_action)
                 
                     
 

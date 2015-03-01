@@ -1,5 +1,6 @@
 punch: punch.wav
 swing_right: zoom.wav
+swing_left: sword.wav
 idea: button-3.wav
 # lines starting with pound sign are comments
 # possible gestures:

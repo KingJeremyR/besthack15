@@ -8,7 +8,7 @@ CONFIG_PATH = "assets/cfg"
 def get_cfg_path(cfg):
     return os.path.join(CONFIG_PATH, cfg)
 
-def load(cfg):
+def load_cfg(cfg):
     return load_cfg_file(get_cfg_path(cfg))
 
 def load_cfg_file(fname):
