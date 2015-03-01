@@ -25,8 +25,12 @@ class Listener(myo.DeviceListener):
         self.x_accel_buffer = [0] * self.BUFFER_SIZE
         self.x_accel_index = 0
 
+        self.pitch_buffer = [0] * self.BUFFER_SIZE
+        self.pitch_index = 0
+
         self.gyroscope = []
         self.acceleration = []
+        self.orientation = []
         self.myo = None
 
     def on_pair(self, myo, timestamp):
@@ -39,6 +43,19 @@ class Listener(myo.DeviceListener):
 
     def on_event(self, event):
         pass
+
+    def on_orientation_data(self, myo, timestamp, orientation):
+        self.orientation = orientation
+        
+        roll, pitch, yaw, something = orientation
+
+        self.pitch_buffer[self.pitch_index] = pitch
+        self.pitch_index = self.pitch_index + 1
+
+        if self.pitch_index == self.BUFFER_SIZE:
+            self.pitch_index = 0
+
+
 
     def on_gyroscope_data(self, myo, timestamp, gyroscope):
         self.gyroscope = gyroscope
@@ -62,7 +79,7 @@ class Listener(myo.DeviceListener):
 
 
 def isPointingUp(listener):
-    if get_average(listener.x_gyro_buffer) > 75 and get_average(listener.x_accel_buffer) < -0.75:
+    if get_average(listener.pitch_buffer) < -0.45 and get_average(listener.x_gyro_buffer) > 100:
         return True
 
     return False
@@ -79,7 +96,9 @@ def get_average(buf):
 def printValues(listener):
     for val in listener.gyroscope:
         print("{},\t".format(round(val, 2)), end="")
-    for val in listener.acceleration:
+    # for val in listener.acceleration:
+    #     print("{},\t".format(round(val, 2)), end="")
+    for val in listener.orientation:
         print("{},\t".format(round(val, 2)), end="")
     print()
 
@@ -99,7 +118,7 @@ def main():
     try:
         while hub.running:
 
-            # if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.25):
+            # if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.1):
             #     time_of_last_print = datetime.datetime.now()
             #     printValues(listener)
 
