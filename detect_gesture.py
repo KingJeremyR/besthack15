@@ -217,18 +217,18 @@ def moving_forward(listener):
 
     return False
 
-def moving_leftToRight(listener):
-    global direction
+def moving_left_to_right(listener):
+    global direction, MOVEMENT_THRESHOLD
     y_val = get_average(listener.y_gyro_buffer)
-    if direction == Direction.left and get_average(listener.z_gyro_buffer) < -100 and y_val <50 and y_val > -50:
+    if direction == Direction.left and get_average(listener.z_gyro_buffer) < -MOVEMENT_THRESHOLD and y_val <50 and y_val > -50:
         return True
 
     return False
 
-def moving_rightToLeft(listener):
-    global direction
+def moving_right_to_left(listener):
+    global direction, MOVEMENT_THRESHOLD
     y_val = get_average(listener.y_gyro_buffer)
-    if direction == Direction.right and get_average(listener.z_gyro_buffer) > 100 and y_val <50 and y_val > -50:
+    if direction == Direction.right and get_average(listener.z_gyro_buffer) > MOVEMENT_THRESHOLD and y_val <50 and y_val > -50:
         return True
 
     return False
@@ -300,7 +300,7 @@ def main():
             elif moving_forward(listener):
                 long_vibrate(listener, forward_action)
 
-            elif moving_leftToRight(listener):
+            elif moving_left_to_right(listener):
                 long_vibrate(listener, leftToRight_action)
                 
                     
