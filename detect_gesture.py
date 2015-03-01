@@ -79,7 +79,7 @@ class Listener(myo.DeviceListener):
 
 
 def isPointingUp(listener):
-    if get_average(listener.pitch_buffer) < -0.45 and get_average(listener.x_gyro_buffer) > 100:
+    if get_average(listener.pitch_buffer) < -0.45 and get_average(listener.x_gyro_buffer) > 75:
         return True
 
     return False
@@ -94,12 +94,16 @@ def get_average(buf):
     return average / len(buf)
 
 def printValues(listener):
-    for val in listener.gyroscope:
-        print("{},\t".format(round(val, 2)), end="")
+    # for val in listener.gyroscope:
+    #     print("{},\t".format(round(val, 2)), end="")
     # for val in listener.acceleration:
     #     print("{},\t".format(round(val, 2)), end="")
     for val in listener.orientation:
         print("{},\t".format(round(val, 2)), end="")
+    print(get_average(listener.pitch_buffer), end="")
+    print("\t", end="")
+    print(get_average(listener.x_gyro_buffer), end="")
+
     print()
 
 
@@ -118,15 +122,15 @@ def main():
     try:
         while hub.running:
 
-            # if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.1):
-            #     time_of_last_print = datetime.datetime.now()
-            #     printValues(listener)
+            if datetime.datetime.now() - time_of_last_print  > datetime.timedelta(0, 0.1):
+                time_of_last_print = datetime.datetime.now()
+                printValues(listener)
 
             if datetime.datetime.now() - current_time  > datetime.timedelta(0, 0, 10000):
                 current_time = datetime.datetime.now()
 
             if isPointingUp(listener):
-                # print ("Point Up!")
+                print ("Point Up!")
                 if time_of_last_vibrate == -1 or (current_time - time_of_last_vibrate) > datetime.timedelta(0,1):
                     listener.myo.vibrate("long")
                     sfx.play("button-3.wav")
