@@ -122,6 +122,8 @@ BUFFER_SIZE = 32
 yaw_buffer = [0] * BUFFER_SIZE
 yaw_buffer_index = 0
 
+MOVEMENT_THRESHOLD = 125
+
 forward_left, forward_right, left_left, left_right, back_left, back_right, right_left, right_right = 0, 0, 0, 0, 0, 0, 0, 0
 
 roll = 0
@@ -200,17 +202,17 @@ def long_vibrate(listener, action):
         action()
 
 def moving_up(listener):
-    global direction
+    global direction, MOVEMENT_THRESHOLD
 
-    if direction == Direction.up and get_average(listener.x_gyro_buffer) > 100:
+    if direction == Direction.up and get_average(listener.x_gyro_buffer) > MOVEMENT_THRESHOLD:
         return True
 
     return False
 
 def moving_forward(listener):
-    global direction
+    global direction, MOVEMENT_THRESHOLD
 
-    if direction == Direction.forward and get_average(listener.x_gyro_buffer) > 100:
+    if direction == Direction.forward and get_average(listener.x_gyro_buffer) > MOVEMENT_THRESHOLD:
         return True
 
     return False
