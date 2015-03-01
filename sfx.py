@@ -13,11 +13,11 @@ def load_file(fname):
     success = True
     try:
         if fname not in sounds:
-            print('Loading sfx: {}'.format(fname))
+            print('Loading sound file: {}'.format(fname))
             snd = pyglet.media.load(fname, streaming=False)
             sounds[fname] = snd
     except FileNotFoundError:
-        print("File not found: {}".format(fname))
+        print("File not found: {}".format(fname), file=sys.stderr)
         success = False
     return success
 
